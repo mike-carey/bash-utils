@@ -1,0 +1,13 @@
+###
+# Environment variables
+##
+
+export PATH="$PWD/bin:$PATH"
+
+# Docker info
+export DOCKER_SERVER=
+export DOCKER_USERNAME=
+export DOCKER_PASSWORD=
+export DOCKER_TAG=
+
+# .env
