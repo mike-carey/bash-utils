@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+function jargrep() {
+  local search_str="$1"
+  local directory="${2:-.}"
+
+  if [[ -z "$search_str" ]]; then
+    {
+      echo "Usage:  $0 STR DIR"
+      echo "  STR (string)     The string to search for"
+      echo "  DIR (directory)  The directory to search within; defaults to ."
+    } >&2
+    return 1
+  fi
+
+  for i in $( find "$directory" -name "*jar" ); do
+    echo "Looking in $i ..."
+    jar tvf $i | grep "$search_str" > /dev/null
+    if [ $? == 0 ]; then
+      echo "==> Found \"$search_str\" in $i"
+    fi
+  done
+}
+
+jargrep ${@:-}
+exit $?
+

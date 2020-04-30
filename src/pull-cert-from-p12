@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+while getopts ':fp:' opt; do
+  case $opt in
+    f )
+      force=true
+      ;;
+    p )
+      PASSPHRASE="$OPTARG"
+      ;;
+    * )
+      echo "Unknown option $opt" >&2
+      ;;
+  esac
+done
+
+shift $((OPTIND-1))
+
+file=$1
+out=${2:-.}
+
+if [[ -z "$file" ]]; then
+  echo "Usage:  $0 P12_FILE [OUTPUT_DIRECTORY]" >&2
+  exit 1
+fi
+
+if [[ ! -f "$file" ]]; then
+  echo "$file is not a file" >&2
+  exit 2
+fi
+
+if [[ ${force:-false} != true ]]; then
+  if [[ -d "$out" && -n "$(ls -A $out)" ]]; then
+    echo "$out is not empty. Cowardly refusing to continue" >&2
+    exit 3
+  fi
+fi
+
+if [[ -z "${PASSPHRASE:-}" ]]; then
+  read -s -p 'Passphrase: ' PASSPHRASE
+  echo ""
+fi
+
+mkdir -p $out
+
+openssl pkcs12 -in "$file" -nocerts -nodes -passin file:<(echo "$PASSPHRASE") | sed -ne '/-BEGIN PRIVATE KEY-/,/-END PRIVATE KEY-/p' > $out/private_key.pem
+openssl pkcs12 -in "$file" -clcerts -nokeys -passin file:<(echo "$PASSPHRASE") | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > $out/certificate.crt
+openssl pkcs12 -in "$file" -cacerts -nokeys -chain -passin file:<(echo "$PASSPHRASE") | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > $out/cachain.crt

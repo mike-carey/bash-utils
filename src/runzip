@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+function runzip() {
+  local tgz="$1"
+  local dir="$(basename $tgz .tgz)"
+
+  mkdir -p $dir
+  tar -xvzf $tgz -C $dir
+  pushd $dir
+    for t in *.tgz; do
+      if [[ $t == "*.tgz" ]]; then
+        break
+      fi
+      runzip $t
+    done
+  popd
+}
+
+runzip $1
+
+#
